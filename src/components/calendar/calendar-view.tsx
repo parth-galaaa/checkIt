@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useTodos } from '@/lib/hooks/use-todos'
+import { useLists } from '@/lib/hooks/use-lists'
 import { motion } from 'framer-motion'
 import { getDaysInMonth, isSameDay } from '@/lib/utils/date-utils'
 import CalendarHeader from './calendar-header'
@@ -20,6 +21,7 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 	const [currentDate, setCurrentDate] = useState(new Date())
 
 	const { todos } = useTodos()
+	const { lists } = useLists()
 
 	const year = currentDate.getFullYear()
 	const month = currentDate.getMonth()
@@ -57,14 +59,17 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 	// Calculate todo counts per day
 	const todoCounts = useMemo(() => {
 		const counts: Record<string, number> = {}
+		const validListIds = new Set(lists.map(list => list.id))
+
 		todos.forEach(todo => {
-			if (todo.due_date && !todo.completed) {
+			// Only count todos that belong to existing lists
+			if (todo.due_date && !todo.completed && todo.list_id && validListIds.has(todo.list_id)) {
 				const dateKey = new Date(todo.due_date).toDateString()
 				counts[dateKey] = (counts[dateKey] || 0) + 1
 			}
 		})
 		return counts
-	}, [todos])
+	}, [todos, lists])
 
 	const handleDayClick = (date: Date, isCurrentMonth: boolean) => {
 		if (!isCurrentMonth) return

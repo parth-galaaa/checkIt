@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Todo, TodoUpdate } from '@/lib/types/database'
+import { Todo, TodoUpdate, List } from '@/lib/types/database'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ interface TodoItemProps {
   onToggle: (completed: boolean) => void
   onUpdate: (id: string, updates: TodoUpdate) => Promise<any>
   onDelete: () => void
+  selectedList?: List | null
 }
 
 const priorityConfig = {
@@ -35,7 +36,7 @@ const priorityConfig = {
   },
 }
 
-export default function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) {
+export default function TodoItem({ todo, onToggle, onUpdate, onDelete, selectedList }: TodoItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -76,17 +77,38 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoIte
                 />
               </motion.div>
 
-              {/* Content */}
-              <div className="flex-1 space-y-2 min-w-0">
-                <h3
-                  className={`font-semibold text-base leading-tight transition-all ${todo.completed
-                      ? 'line-through text-muted-foreground'
-                      : 'text-foreground'
-                    }`}
-                >
-                  {todo.title}
-                </h3>
+              {/* Content - Compact Layout */}
+              <div className="flex-1 min-w-0">
+                {/* Title Row with Priority and Date on the Right */}
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <h3
+                    className={`font-semibold text-base leading-tight transition-all flex-1 ${todo.completed
+                        ? 'line-through text-muted-foreground'
+                        : 'text-foreground'
+                      }`}
+                  >
+                    {todo.title}
+                  </h3>
 
+                  {/* Priority and Date Badges - Far Right */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {config && todo.priority && (
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${config.badge} flex items-center gap-1`}>
+                        {PriorityIcon && <PriorityIcon className="h-3 w-3" />}
+                        {todo.priority}
+                      </span>
+                    )}
+
+                    {todo.due_date && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(todo.due_date), 'MMM dd, yyyy')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
                 {todo.description && (
                   <p className={`text-sm leading-relaxed ${todo.completed
                       ? 'text-muted-foreground/70'
@@ -95,30 +117,13 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoIte
                     {todo.description}
                   </p>
                 )}
-
-                {/* Tags and Info */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  {config && todo.priority && (
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${config.badge} flex items-center gap-1`}>
-                      {PriorityIcon && <PriorityIcon className="h-3 w-3" />}
-                      {todo.priority}
-                    </span>
-                  )}
-
-                  {todo.due_date && (
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(todo.due_date), 'MMM dd, yyyy')}
-                    </span>
-                  )}
-                </div>
               </div>
 
               {/* Action Buttons */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isHovered ? 1 : 0 }}
-                className="flex gap-1"
+                className="flex gap-1 shrink-0"
               >
                 <Button
                   variant="ghost"
@@ -149,6 +154,7 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoIte
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onUpdate={onUpdate}
+        selectedList={selectedList}
       />
     </>
   )

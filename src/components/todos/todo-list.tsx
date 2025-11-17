@@ -212,6 +212,7 @@ export default function TodoList({ selectedListId, selectedDate, onClearDateFilt
                       onToggle={(completed) => toggleTodo(todo.id, completed)}
                       onUpdate={updateTodo}
                       onDelete={() => deleteTodo(todo.id)}
+                      selectedList={selectedList}
                     />
                   </motion.div>
                 ))}

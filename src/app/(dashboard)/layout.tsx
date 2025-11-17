@@ -44,9 +44,9 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       <header className="border-b bg-background/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
-            {/* Logo and Greeting */}
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo and Greeting - Far Left */}
+            <div className="flex items-center gap-2 md:gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-linear-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shrink-0">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -62,13 +62,12 @@ export default function DashboardLayout({
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                 </svg>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate">
-                  {getGreeting()}, {profile?.display_name || 'there'}! 👋
-                </h1>
-              </div>
+              <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight">
+                {getGreeting()}, {profile?.display_name || 'there'}! 👋
+              </h1>
             </div>
-            {/* Actions */}
+
+            {/* Actions - Far Right */}
             <div className="flex items-center gap-1 md:gap-2 shrink-0">
               <ThemeToggle />
               <SettingsMenu user={user} profile={profile} />

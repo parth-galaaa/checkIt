@@ -48,9 +48,9 @@ export default function AddTodoDialog({ open, onOpenChange, onAdd, selectedList 
       // Fix date to prevent timezone issues (saving day before)
       let formattedDate = null
       if (dueDate) {
-        // Parse the date as local time and format as YYYY-MM-DD
-        const date = new Date(dueDate + 'T00:00:00')
-        formattedDate = date.toISOString().split('T')[0]
+        // Use the date string directly without converting to Date object
+        // The input type="date" already gives us YYYY-MM-DD format
+        formattedDate = dueDate
       }
 
       await onAdd({

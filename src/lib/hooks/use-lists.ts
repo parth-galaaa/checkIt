@@ -121,6 +121,15 @@ export function useLists() {
 		setLists(prev => prev.filter(l => l.id !== id))
 
 		try {
+			// First, delete all todos associated with this list
+			const { error: todosError } = await supabase
+				.from('todos')
+				.delete()
+				.eq('list_id', id)
+
+			if (todosError) throw todosError
+
+			// Then delete the list
 			const { error } = await supabase.from('lists').delete().eq('id', id)
 
 			if (error) throw error

@@ -67,9 +67,8 @@ export default function EditTodoDialog({
       // Fix date to prevent timezone issues (saving day before)
       let formattedDate = null
       if (dueDate) {
-        // Parse the date as local time and format as YYYY-MM-DD
-        const date = new Date(dueDate + 'T00:00:00')
-        formattedDate = date.toISOString().split('T')[0]
+        // Use the date string directly
+        formattedDate = dueDate
       }
 
       await onUpdate(todo.id, {

@@ -41,11 +41,17 @@ export default function ListsSidebar({ selectedListId, onSelectList, className }
 	}, [todos])
 
 	const handleAddList = async (list: any) => {
-		const newList = await addList(list)
-		setIsAddDialogOpen(false)
-		// Auto-select the newly created list
-		if (newList) {
-			onSelectList(newList.id)
+		try {
+			const newList = await addList(list)
+			setIsAddDialogOpen(false)
+			// Wait a brief moment for state to sync, then select
+			setTimeout(() => {
+				if (newList) {
+					onSelectList(newList.id)
+				}
+			}, 100)
+		} catch (error) {
+			console.error('Failed to add list:', error)
 		}
 	}
 

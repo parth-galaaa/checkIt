@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { List, Todo } from '@/lib/types/database'
 import { getListIcon } from '@/lib/utils/list-icons'
 import { motion } from 'framer-motion'
@@ -31,6 +32,7 @@ export default function ListItem({
 	onDelete
 }: ListItemProps) {
 	const Icon = getListIcon(list.icon)
+	const [isHovered, setIsHovered] = useState(false)
 
 	return (
 		<motion.div
@@ -40,6 +42,8 @@ export default function ListItem({
 			exit={{ opacity: 0, x: -20 }}
 			whileHover={{ x: 4 }}
 			transition={{ duration: 0.2 }}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => setIsHovered(false)}
 		>
 			<div
 				className={`
@@ -62,20 +66,28 @@ export default function ListItem({
 					/>
 				</div>
 
-				<div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-					<span className="text-sm font-medium truncate">
+				<div className="flex-1 min-w-0">
+					<span className="text-sm font-medium truncate block">
 						{list.name}
 					</span>
+				</div>
+
+				{/* Count badge - always visible, shifts left on hover */}
+				<motion.div
+					animate={{ x: isHovered ? -8 : 0 }}
+					transition={{ duration: 0.2 }}
+				>
 					{todoCount > 0 && (
 						<Badge
 							variant={isActive ? "secondary" : "outline"}
-							className="h-5 min-w-5 px-1.5 text-xs font-semibold shrink-0"
+							className="h-5 min-w-5 px-1.5 text-xs font-semibold"
 						>
 							{todoCount}
 						</Badge>
 					)}
-				</div>
+				</motion.div>
 
+				{/* Menu button - appears on hover */}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
 						<Button
