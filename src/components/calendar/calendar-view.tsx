@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTodos } from '@/lib/hooks/use-todos'
 import { useLists } from '@/lib/hooks/use-lists'
 import { motion } from 'framer-motion'
@@ -19,6 +19,8 @@ interface CalendarViewProps {
 
 export default function CalendarView({ className, selectedDate, onDateSelect }: CalendarViewProps) {
 	const [currentDate, setCurrentDate] = useState(new Date())
+	const [renderKey, setRenderKey] = useState(0)
+	const [hasAnimated, setHasAnimated] = useState(false)
 
 	const { todos } = useTodos()
 	const { lists } = useLists()
@@ -56,6 +58,16 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 
 	const allDays = [...previousMonthDays, ...daysInMonth, ...followingMonthDays]
 
+	// Force recalculation when todos change
+	useEffect(() => {
+		setRenderKey(prev => prev + 1)
+	}, [todos, lists])
+
+	// Mark as animated after first render
+	useEffect(() => {
+		setHasAnimated(true)
+	}, [])
+
 	// Calculate todo counts per day
 	const todoCounts = useMemo(() => {
 		const counts: Record<string, number> = {}
@@ -69,7 +81,7 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 			}
 		})
 		return counts
-	}, [todos, lists])
+	}, [todos, lists, renderKey]) // Add renderKey as dependency
 
 	const handleDayClick = (date: Date, isCurrentMonth: boolean) => {
 		if (!isCurrentMonth) return
@@ -100,8 +112,7 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 
 	return (
 		<motion.aside
-			key={`calendar-${todos.length}-${lists.length}`}
-			initial={{ x: 100, opacity: 0 }}
+			initial={hasAnimated ? false : { x: 100, opacity: 0 }}
 			animate={{ x: 0, opacity: 1 }}
 			transition={{ duration: 0.3 }}
 			className={`flex flex-col border-l bg-card overflow-y-auto ${className}`}
@@ -144,7 +155,7 @@ export default function CalendarView({ className, selectedDate, onDateSelect }: 
 
 							return (
 								<CalendarDay
-									key={index}
+									key={`${index}-${date.toDateString()}-${itemCount}`}
 									date={date}
 									isCurrentMonth={isCurrentMonth}
 									isToday={isToday}

@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2, Calendar, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { format } from 'date-fns'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import EditTodoDialog from './edit-todo-dialog'
 import { parseDateWithoutTimezone } from '@/lib/utils/date-utils'
 
@@ -54,18 +54,18 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete, selectedL
   return (
     <>
       <motion.div
-        whileHover={{ scale: 1.005, y: -2 }}
-        transition={{ duration: 0.2 }}
+        whileHover={{ scale: 1.002, y: -1 }}
+        transition={{ duration: 0.15 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <Card
           className={`${config?.border || ''} ${isDeleting ? 'opacity-50' : ''
             } ${todo.completed ? 'bg-muted/30 dark:bg-muted/10' : 'bg-card'
-            } hover:shadow-lg transition-all duration-200`}
+            } hover:shadow-md transition-all duration-200`}
         >
-          <CardContent className="p-4">
-            <div className="flex items-start gap-4">
+          <CardContent className="p-3">
+            <div className="flex items-start gap-3">
               {/* Checkbox */}
               <motion.div
                 whileTap={{ scale: 0.9 }}
@@ -78,12 +78,13 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete, selectedL
                 />
               </motion.div>
 
-              {/* Content - Compact Layout */}
-              <div className="flex-1 min-w-0">
-                {/* Title Row with Priority and Date on the Right */}
-                <div className="flex items-start justify-between gap-3 mb-1">
+              {/* Content - Optimized Compact Layout */}
+              <div className="flex-1 min-w-0 space-y-1">
+                {/* Title Row with Priority, Date, and Actions */}
+                <div className="flex items-start justify-between gap-2">
+                  {/* Title */}
                   <h3
-                    className={`font-semibold text-base leading-tight transition-all flex-1 ${todo.completed
+                    className={`font-semibold text-sm leading-tight transition-all flex-1 min-w-0 ${todo.completed
                       ? 'line-through text-muted-foreground'
                       : 'text-foreground'
                       }`}
@@ -91,27 +92,70 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete, selectedL
                     {todo.title}
                   </h3>
 
-                  {/* Priority and Date Badges - Far Right, Stacked Vertically */}
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {config && todo.priority && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.badge} flex items-center gap-1`}>
-                        {PriorityIcon && <PriorityIcon className="h-3 w-3" />}
-                        {todo.priority}
-                      </span>
-                    )}
+                  {/* Right side: Priority, Date (stacked), and Action Buttons */}
+                  <div className="flex items-start gap-2 shrink-0">
+                    {/* Priority and Date Badges - Stacked Vertically */}
+                    {(config && todo.priority) || todo.due_date ? (
+                      <motion.div
+                        className="flex flex-col items-end gap-1"
+                        animate={{ x: isHovered ? -16 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {/* Priority Badge */}
+                        {config && todo.priority && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.badge} flex items-center gap-1 whitespace-nowrap`}>
+                            {PriorityIcon && <PriorityIcon className="h-3 w-3" />}
+                            {todo.priority}
+                          </span>
+                        )}
 
-                    {todo.due_date && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        <Calendar className="h-3 w-3" />
-                        {format(parseDateWithoutTimezone(todo.due_date), 'MMM dd')}
-                      </span>
-                    )}
+                        {/* Date Badge */}
+                        {todo.due_date && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap">
+                            <Calendar className="h-3 w-3" />
+                            {format(parseDateWithoutTimezone(todo.due_date), 'MMM dd')}
+                          </span>
+                        )}
+                      </motion.div>
+                    ) : null}
+
+                    {/* Action Buttons - appear on hover */}
+                    <AnimatePresence>
+                      {isHovered && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex gap-1"
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsEditDialogOpen(true)}
+                            disabled={isDeleting}
+                            className="h-7 w-7 hover:bg-primary/10"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="h-7 w-7 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
-                {/* Description */}
+                {/* Description - Only show if exists */}
                 {todo.description && (
-                  <p className={`text-sm leading-relaxed ${todo.completed
+                  <p className={`text-xs leading-relaxed pr-2 ${todo.completed
                     ? 'text-muted-foreground/70'
                     : 'text-muted-foreground'
                     }`}>
@@ -119,32 +163,6 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete, selectedL
                   </p>
                 )}
               </div>
-
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isHovered ? 1 : 0 }}
-                className="flex gap-1 shrink-0"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditDialogOpen(true)}
-                  disabled={isDeleting}
-                  className="h-8 w-8 hover:bg-primary/10"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="h-8 w-8 hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </motion.div>
             </div>
           </CardContent>
         </Card>

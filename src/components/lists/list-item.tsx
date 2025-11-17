@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { List, Todo } from '@/lib/types/database'
 import { getListIcon } from '@/lib/utils/list-icons'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { MoreVertical, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +33,10 @@ export default function ListItem({
 }: ListItemProps) {
 	const Icon = getListIcon(list.icon)
 	const [isHovered, setIsHovered] = useState(false)
+	const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+	// Keep hover state true while menu is open
+	const showActions = isHovered || isMenuOpen
 
 	return (
 		<motion.div
@@ -74,48 +78,60 @@ export default function ListItem({
 
 				{/* Count badge - always visible, shifts left on hover */}
 				<motion.div
-					animate={{ x: isHovered ? -8 : 0 }}
-					transition={{ duration: 0.2 }}
-					key={`count-${todoCount}`}
+					animate={{
+						x: showActions ? -8 : 0,
+						opacity: 1
+					}}
+					transition={{ duration: 0.2, ease: "easeInOut" }}
 				>
-					{todoCount > 0 && (
-						<Badge
-							variant={isActive ? "secondary" : "outline"}
-							className="h-5 min-w-5 px-1.5 text-xs font-semibold"
-						>
-							{todoCount}
-						</Badge>
-					)}
+					<Badge
+						variant={isActive ? "secondary" : "outline"}
+						className="h-5 min-w-5 px-1.5 text-xs font-semibold"
+					>
+						{todoCount}
+					</Badge>
 				</motion.div>
 
-				{/* Menu button - appears on hover */}
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-						<Button
-							variant="ghost"
-							size="icon"
-							className={`
-                h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0
-                ${isActive ? 'hover:bg-primary-foreground/20' : ''}
-              `}
+				{/* Menu button - appears on hover with animation */}
+				<AnimatePresence>
+					{(showActions || !window.matchMedia('(min-width: 768px)').matches) && (
+						<motion.div
+							initial={{ opacity: 0, x: 10 }}
+							animate={{ opacity: 1, x: 0 }}
+							exit={{ opacity: 0, x: 10 }}
+							transition={{ duration: 0.2 }}
+							className="shrink-0"
 						>
-							<MoreVertical className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-							<Edit className="h-4 w-4 mr-2" />
-							Edit List
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={(e) => { e.stopPropagation(); onDelete(); }}
-							className="text-destructive focus:text-destructive"
-						>
-							<Trash2 className="h-4 w-4 mr-2" />
-							Delete List
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+							<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+								<DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+									<Button
+										variant="ghost"
+										size="icon"
+										className={`
+		                h-7 w-7 transition-opacity shrink-0
+		                ${isActive ? 'hover:bg-primary-foreground/20' : ''}
+		              `}
+									>
+										<MoreVertical className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-48">
+									<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); setIsMenuOpen(false); }}>
+										<Edit className="h-4 w-4 mr-2" />
+										Edit List
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={(e) => { e.stopPropagation(); onDelete(); setIsMenuOpen(false); }}
+										className="text-destructive focus:text-destructive"
+									>
+										<Trash2 className="h-4 w-4 mr-2" />
+										Delete List
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</motion.div>
+					)}
+				</AnimatePresence>
 			</div>
 		</motion.div>
 	)

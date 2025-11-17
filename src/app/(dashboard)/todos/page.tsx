@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TodoList from '@/components/todos/todo-list'
 import ListsSidebar from '@/components/lists/lists-sidebar'
 import CalendarView from '@/components/calendar/calendar-view'
@@ -14,13 +14,25 @@ export default function TodosPage() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+
+  // NEW: Derived selected list that updates reactively
+  const selectedList = lists.find(l => l.id === selectedListId) || null
+
+  // NEW: Effect to handle when a list is deleted and selected
+  useEffect(() => {
+    if (selectedListId && !lists.find(l => l.id === selectedListId)) {
+      // Selected list was deleted, clear selection
+      setSelectedListId(null)
+    }
+  }, [lists, selectedListId])
 
   return (
     <>
       {/* Mobile Header with Menu - Only visible on mobile */}
       <div className="md:hidden flex items-center justify-between p-4 border-b bg-card">
         {/* Lists Menu */}
-        <Sheet>
+        <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon">
               <ListIcon className="h-5 w-5" />
@@ -34,6 +46,7 @@ export default function TodosPage() {
               selectedListId={selectedListId}
               onSelectList={(listId) => {
                 setSelectedListId(listId)
+                setShowMobileMenu(false)
               }}
             />
           </SheetContent>
@@ -70,7 +83,7 @@ export default function TodosPage() {
           <div className="container max-w-full px-3 md:px-8 py-3 md:py-8">
             <TodoList
               selectedListId={selectedListId}
-              selectedList={lists.find(l => l.id === selectedListId) || null}
+              selectedList={selectedList}
               selectedDate={selectedDate}
               onClearDateFilter={() => setSelectedDate(null)}
             />
