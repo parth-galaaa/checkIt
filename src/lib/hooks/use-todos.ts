@@ -13,9 +13,13 @@ export function useTodos(listId?: string | null) {
   useEffect(() => {
     fetchTodos()
 
-    // Set up real-time subscription
+    // 5. Bug Fix: Use a unique channel name based on listId.
+    // If we use 'todos-changes' for everything, the Calendar view subscription
+    // and the TodoList subscription will clash, causing one to disconnect.
+    const channelId = `todos-channel-${listId || 'all-items'}`
+
     const channel = supabase
-      .channel('todos-changes')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {
@@ -23,7 +27,22 @@ export function useTodos(listId?: string | null) {
           schema: 'public',
           table: 'todos',
         },
-        () => {
+        (payload) => {
+          // Optimization: If we are filtering by listId, only refetch
+          // if the changed item belongs to this list (or was deleted from it)
+          if (listId) {
+            const newItem = payload.new as Todo
+            const oldItem = payload.old as Todo
+
+            // If the update isn't relevant to this specific list view, skip refetch
+            if (
+              (newItem && newItem.list_id !== listId) &&
+              (oldItem && oldItem.list_id !== listId) &&
+              payload.eventType !== 'DELETE'
+            ) {
+              return
+            }
+          }
           fetchTodos()
         }
       )
@@ -42,7 +61,7 @@ export function useTodos(listId?: string | null) {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (listId !== undefined) {
+      if (listId) {
         query = query.eq('list_id', listId)
       }
 
@@ -71,6 +90,7 @@ export function useTodos(listId?: string | null) {
         user_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        completed: false
       }
 
       // Optimistic update
@@ -97,7 +117,6 @@ export function useTodos(listId?: string | null) {
   }
 
   const updateTodo = async (id: string, updates: TodoUpdate) => {
-    // Store previous state for rollback
     const previousTodos = [...todos]
 
     // Optimistic update
@@ -125,7 +144,6 @@ export function useTodos(listId?: string | null) {
   }
 
   const deleteTodo = async (id: string) => {
-    // Optimistic update
     const previousTodos = [...todos]
     setTodos(prev => prev.filter(t => t.id !== id))
 
@@ -134,7 +152,6 @@ export function useTodos(listId?: string | null) {
 
       if (error) throw error
     } catch (err) {
-      // Revert on error
       setTodos(previousTodos)
       setError(err instanceof Error ? err.message : 'Failed to delete todo')
       throw err
@@ -142,13 +159,11 @@ export function useTodos(listId?: string | null) {
   }
 
   const toggleTodo = async (id: string, completed: boolean) => {
-    // Optimistic update
     setTodos(prev => prev.map(t => t.id === id ? { ...t, completed } : t))
 
     try {
       return await updateTodo(id, { completed })
     } catch (err) {
-      // Revert on error
       fetchTodos()
       throw err
     }

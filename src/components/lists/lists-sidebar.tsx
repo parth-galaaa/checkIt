@@ -7,7 +7,7 @@ import { List } from '@/lib/types/database'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, Loader2, List as ListIcon, Sparkles } from 'lucide-react'
+import { List as ListIcon, Sparkles, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ListItem from './list-item'
 import AddListDialog from './add-list-dialog'
@@ -40,12 +40,14 @@ export default function ListsSidebar({ selectedListId, onSelectList, className }
 		return counts
 	}, [todos])
 
-	const handleAddList = async (list: any) => {
+	const handleAddList = async (listData: any) => {
 		try {
-			const newList = await addList(list)
+			// 1. Wait for the DB to return the real object (including the real ID)
+			const newList = await addList(listData)
 			setIsAddDialogOpen(false)
-			// Immediately select the new list - the list will be available optimistically
-			if (newList) {
+
+			// 2. Select the list using the REAL ID, not a temporary optimistic one
+			if (newList && newList.id) {
 				onSelectList(newList.id)
 			}
 		} catch (error) {
@@ -58,7 +60,23 @@ export default function ListsSidebar({ selectedListId, onSelectList, className }
 		setIsEditDialogOpen(true)
 	}
 
-	const handleDeleteList = (list: List) => {
+	const handleDeleteList = async (id: string) => {
+		try {
+			await deleteList(id)
+
+			// 3. Bug Fix: If we deleted the currently selected list, clear the selection
+			// so the main view doesn't show a "ghost" list.
+			if (selectedListId === id) {
+				onSelectList(null)
+			}
+
+			setIsDeleteDialogOpen(false)
+		} catch (error) {
+			console.error('Failed to delete list:', error)
+		}
+	}
+
+	const openDeleteDialog = (list: List) => {
 		setSelectedList(list)
 		setIsDeleteDialogOpen(true)
 	}
@@ -115,7 +133,7 @@ export default function ListsSidebar({ selectedListId, onSelectList, className }
 									todoCount={listTodoCounts[list.id] || 0}
 									onClick={() => onSelectList(list.id)}
 									onEdit={() => handleEditList(list)}
-									onDelete={() => handleDeleteList(list)}
+									onDelete={() => openDeleteDialog(list)}
 								/>
 							))}
 						</AnimatePresence>
@@ -155,7 +173,7 @@ export default function ListsSidebar({ selectedListId, onSelectList, className }
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
 				list={selectedList}
-				onDelete={deleteList}
+				onDelete={handleDeleteList}
 			/>
 		</>
 	)
