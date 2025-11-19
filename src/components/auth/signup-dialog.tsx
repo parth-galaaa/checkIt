@@ -157,7 +157,7 @@ export function SignupDialog({ open, onOpenChange, onLoginClick }: SignupDialogP
                 <Input
                   id="signup-password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder=""
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -169,7 +169,7 @@ export function SignupDialog({ open, onOpenChange, onLoginClick }: SignupDialogP
                 <Input
                   id="signup-confirmPassword"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder=""
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required

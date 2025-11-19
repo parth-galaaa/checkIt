@@ -96,7 +96,7 @@ export function LoginDialog({ open, onOpenChange, onSignupClick }: LoginDialogPr
                 <Input
                   id="login-password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder=""
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
